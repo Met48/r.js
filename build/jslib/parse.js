@@ -358,7 +358,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
         var jsConfig, foundConfig, stringData, foundRange, quote, quoteMatch,
             quoteRegExp = /(:\s|\[\s*)(['"])/,
             astRoot = esprima.parse(fileContents, {
-                loc: true
+                locations: true
             });
 
         traverse(astRoot, function (node) {
@@ -428,7 +428,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
         var lines,
             locs = [],
             astRoot = esprima.parse(fileContents, {
-                loc: true
+                locations: true
             });
 
         parse.recurse(astRoot, function (callName, config, name, deps, node) {
@@ -860,63 +860,78 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
      */
     parse.getLicenseComments = function (fileName, contents) {
         var commentNode, refNode, subNode, value, i, j,
-            //xpconnect's Reflect does not support comment or range, but
-            //prefer continued operation vs strict parity of operation,
-            //as license comments can be expressed in other ways, like
-            //via wrap args, or linked via sourcemaps.
-            ast = esprima.parse(contents, {
-                comment: true,
-                range: true
-            }),
             result = '',
             existsMap = {},
             lineEnd = contents.indexOf('\r') === -1 ? '\n' : '\r\n';
 
+        var lastWasLine = false;
+        var comments = [];
+
+        var onComment = function (block, text, start, end) {
+            comments.push({
+                type: block ? 'Block' : 'Line',
+                value: text,
+                range: [start, end]
+            });
+        };
+
+        //xpconnect's Reflect does not support comment or range, but
+        //prefer continued operation vs strict parity of operation,
+        //as license comments can be expressed in other ways, like
+        //via wrap args, or linked via sourcemaps.
+        var ast = esprima.parse(contents, {
+            onComment: onComment,
+            comment: true,
+            ranges: true
+        });
+
         if (ast.comments) {
-            for (i = 0; i < ast.comments.length; i++) {
-                commentNode = ast.comments[i];
+            comments = comments.concat(ast.comments);
+        }
 
-                if (commentNode.type === 'Line') {
-                    value = '//' + commentNode.value + lineEnd;
-                    refNode = commentNode;
+        for (i = 0; i < comments.length; i++) {
+            commentNode = comments[i];
 
-                    if (i + 1 >= ast.comments.length) {
-                        value += lineEnd;
-                    } else {
-                        //Look for immediately adjacent single line comments
-                        //since it could from a multiple line comment made out
-                        //of single line comments. Like this comment.
-                        for (j = i + 1; j < ast.comments.length; j++) {
-                            subNode = ast.comments[j];
-                            if (subNode.type === 'Line' &&
-                                    subNode.range[0] === refNode.range[1] + 1) {
-                                //Adjacent single line comment. Collect it.
-                                value += '//' + subNode.value + lineEnd;
-                                refNode = subNode;
-                            } else {
-                                //No more single line comment blocks. Break out
-                                //and continue outer looping.
-                                break;
-                            }
-                        }
-                        value += lineEnd;
-                        i = j - 1;
-                    }
+            if (commentNode.type === 'Line') {
+                value = '//' + commentNode.value + lineEnd;
+                refNode = commentNode;
+
+                if (i + 1 >= comments.length) {
+                    value += lineEnd;
                 } else {
-                    value = '/*' + commentNode.value + '*/' + lineEnd + lineEnd;
+                    //Look for immediately adjacent single line comments
+                    //since it could from a multiple line comment made out
+                    //of single line comments. Like this comment.
+                    for (j = i + 1; j < comments.length; j++) {
+                        subNode = comments[j];
+                        if (subNode.type === 'Line' &&
+                                subNode.range[0] === refNode.range[1] + 1) {
+                            //Adjacent single line comment. Collect it.
+                            value += '//' + subNode.value + lineEnd;
+                            refNode = subNode;
+                        } else {
+                            //No more single line comment blocks. Break out
+                            //and continue outer looping.
+                            break;
+                        }
+                    }
+                    value += lineEnd;
+                    i = j - 1;
                 }
-
-                if (!existsMap[value] && (value.indexOf('license') !== -1 ||
-                        (commentNode.type === 'Block' &&
-                            value.indexOf('/*!') === 0) ||
-                        value.indexOf('opyright') !== -1 ||
-                        value.indexOf('(c)') !== -1)) {
-
-                    result += value;
-                    existsMap[value] = true;
-                }
-
+            } else {
+                value = '/*' + commentNode.value + '*/' + lineEnd + lineEnd;
             }
+
+            if (!existsMap[value] && (value.indexOf('license') !== -1 ||
+                    (commentNode.type === 'Block' &&
+                        value.indexOf('/*!') === 0) ||
+                    value.indexOf('opyright') !== -1 ||
+                    value.indexOf('(c)') !== -1)) {
+
+                result += value;
+                existsMap[value] = true;
+            }
+
         }
 
         return result;

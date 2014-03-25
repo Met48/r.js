@@ -7,7 +7,7 @@
 /*global define */
 
 define([ './esprimaAdapter', './parse', 'logger', 'lang'],
-function (esprima, parse, logger, lang) {
+function (acorn, parse, logger, lang) {
     'use strict';
     var transform,
         baseIndentRegExp = /^([ \t]+)/,
@@ -43,8 +43,8 @@ function (esprima, parse, logger, lang) {
                 };
 
             try {
-                astRoot = esprima.parse(contents, {
-                    loc: true
+                astRoot = acorn.parse(contents, {
+                    locations: true
                 });
             } catch (e) {
                 logger.trace('toTransport skipping ' + path + ': ' +

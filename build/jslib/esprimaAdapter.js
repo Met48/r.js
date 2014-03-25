@@ -12,10 +12,11 @@
  * quickly. So favor it built in Reflect parser:
  * https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API
  */
-define(['./esprima', 'env'], function (esprima, env) {
-    if (env.get() === 'xpconnect' && typeof Reflect !== 'undefined') {
-        return Reflect;
-    } else {
-        return esprima;
-    }
+define(['./acorn', 'env'], function (acorn, env) {
+    return acorn;
+    // if (env.get() === 'xpconnect' && typeof Reflect !== 'undefined') {
+    //     return Reflect;
+    // } else {
+    //     return esprima;
+    // }
 });
