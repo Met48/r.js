@@ -1,7 +1,11 @@
 {
     "name": "requirejs",
     "private": "true",
-    "version": "2.2.0",
+    "version": "2.2.1",
+    "main": "./bin/r.js",
+    "bin": {
+        "r.js": "./bin/r.js"
+    },
     "volo": {
         "url": "https://raw.github.com/jrburke/r.js/{version}/dist/r.js"
     }
