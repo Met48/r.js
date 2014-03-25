@@ -1,3 +1,7 @@
+# This Fork
+
+This fork uses Acorn to parse. This significantly improves build times at the cost of some JS1.8 features.
+
 # r.js
 
 A command line tool for running JavaScript scripts that use the
@@ -221,7 +225,7 @@ to discuss them first.
 
 r.js includes modules from these projects:
 
-* [Esprima](http://esprima.org/)
+* [Acorn](https://github.com/marijnh/acorn)
 * [UglifyJS](https://github.com/mishoo/UglifyJS)
 
 # Doing a release
