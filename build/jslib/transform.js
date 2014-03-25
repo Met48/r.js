@@ -6,8 +6,8 @@
 
 /*global define */
 
-define([ './esprimaAdapter', './parse', 'logger', 'lang'],
-function (esprima, parse, logger, lang) {
+define([ './parserAdapter', './parse', 'logger', 'lang'],
+function (parser, parse, logger, lang) {
     'use strict';
     var transform,
         baseIndentRegExp = /^([ \t]+)/,
@@ -43,7 +43,7 @@ function (esprima, parse, logger, lang) {
                 };
 
             try {
-                astRoot = esprima.parse(contents, {
+                astRoot = parser.parse(contents, {
                     loc: true
                 });
             } catch (e) {

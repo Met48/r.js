@@ -7,7 +7,7 @@
 /*jslint plusplus: true */
 /*global define: false */
 
-define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
+define(['./parserAdapter', 'lang'], function (parser, lang) {
     'use strict';
 
     function arrayToString(ary) {
@@ -124,7 +124,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
             result = '',
             moduleList = [],
             needsDefine = true,
-            astRoot = esprima.parse(fileContents);
+            astRoot = parser.parse(fileContents);
 
         parse.recurse(astRoot, function (callName, config, name, deps) {
             if (!deps) {
@@ -243,7 +243,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
     parse.definesRequire = function (fileName, fileContents) {
         var found = false;
 
-        traverse(esprima.parse(fileContents), function (node) {
+        traverse(parser.parse(fileContents), function (node) {
             if (parse.hasDefineAmd(node)) {
                 found = true;
 
@@ -268,7 +268,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
      */
     parse.getAnonDeps = function (fileName, fileContents) {
         var astRoot = typeof fileContents === 'string' ?
-                      esprima.parse(fileContents) : fileContents,
+                      parser.parse(fileContents) : fileContents,
             defFunc = this.findAnonDefineFactory(astRoot);
 
         return parse.getAnonDepsFromNode(defFunc);
@@ -357,7 +357,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
         /*jslint evil: true */
         var jsConfig, foundConfig, stringData, foundRange, quote, quoteMatch,
             quoteRegExp = /(:\s|\[\s*)(['"])/,
-            astRoot = esprima.parse(fileContents, {
+            astRoot = parser.parse(fileContents, {
                 loc: true
             });
 
@@ -427,7 +427,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
     parse.renameNamespace = function (fileContents, ns) {
         var lines,
             locs = [],
-            astRoot = esprima.parse(fileContents, {
+            astRoot = parser.parse(fileContents, {
                 loc: true
             });
 
@@ -473,7 +473,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
      */
     parse.findDependencies = function (fileName, fileContents, options) {
         var dependencies = [],
-            astRoot = esprima.parse(fileContents);
+            astRoot = parser.parse(fileContents);
 
         parse.recurse(astRoot, function (callName, config, name, deps) {
             if (deps) {
@@ -491,7 +491,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
     parse.findCjsDependencies = function (fileName, fileContents) {
         var dependencies = [];
 
-        traverse(esprima.parse(fileContents), function (node) {
+        traverse(parser.parse(fileContents), function (node) {
             var arg;
 
             if (node && node.type === 'CallExpression' && node.callee &&
@@ -569,7 +569,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
      */
     parse.getNamedDefine = function (fileContents) {
         var name;
-        traverse(esprima.parse(fileContents), function (node) {
+        traverse(parser.parse(fileContents), function (node) {
             if (node && node.type === 'CallExpression' && node.callee &&
             node.callee.type === 'Identifier' &&
             node.callee.name === 'define' &&
@@ -590,7 +590,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
     parse.usesAmdOrRequireJs = function (fileName, fileContents) {
         var uses;
 
-        traverse(esprima.parse(fileContents), function (node) {
+        traverse(parser.parse(fileContents), function (node) {
             var type, callName, arg;
 
             if (parse.hasDefDefine(node)) {
@@ -632,7 +632,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
             assignsExports = false;
 
 
-        traverse(esprima.parse(fileContents), function (node) {
+        traverse(parser.parse(fileContents), function (node) {
             var type,
                 exp = node.expression || node.init;
 
@@ -817,7 +817,7 @@ define(['./esprimaAdapter', 'lang'], function (esprima, lang) {
     /**
      * Converts an AST node into a JS source string by extracting
      * the node's location from the given contents string. Assumes
-     * esprima.parse() with loc was done.
+     * parser.parse() with loc was done.
      * @param {String} contents
      * @param {Object} node
      * @returns {String} a JS source string.
